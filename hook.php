@@ -10,41 +10,53 @@
  * @return boolean
  */
 function plugin_roundrobinassignment_install() {
-   global $DB;
-
-   if (!$DB->tableExists("glpi_plugin_roundrobinassignment_configs")) {
-      $query = "CREATE TABLE `glpi_plugin_roundrobinassignment_configs` (
-                  `id` int(11) NOT NULL AUTO_INCREMENT,
-                  `group_id` int(11) NOT NULL,
-                  `active` tinyint(1) NOT NULL DEFAULT '1',
-                  `last_user_id` int(11) DEFAULT NULL,
-                  `date_mod` timestamp NULL DEFAULT NULL,
-                  PRIMARY KEY (`id`),
-                  KEY `group_id` (`group_id`)
-                ) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci";
-      $DB->query($query) or die("Error creating table glpi_plugin_roundrobinassignment_configs " . $DB->error());
-   }
-
-   return true;
-}
+    global $DB;
+ 
+    if (!$DB->tableExists("glpi_plugin_roundrobinassignment_configs")) {
+       $query = "CREATE TABLE `glpi_plugin_roundrobinassignment_configs` (
+                   `id` int(11) NOT NULL AUTO_INCREMENT,
+                   `group_id` int(11) NOT NULL,
+                   `active` tinyint(1) NOT NULL DEFAULT '1',
+                   `last_user_id` int(11) DEFAULT NULL,
+                   `date_mod` timestamp NULL DEFAULT NULL,
+                   PRIMARY KEY (`id`),
+                   KEY `group_id` (`group_id`)
+                 ) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci";
+       $DB->query($query) or die("Error creating table glpi_plugin_roundrobinassignment_configs " . $DB->error());
+    }
+ 
+    // Agregar los permisos predeterminados
+    PluginRoundrobinassignmentProfile::createFirstAccess($_SESSION['glpiactiveprofile']['id']);
+    
+    // Agregar configuración a todos los perfiles existentes
+    PluginRoundrobinassignmentProfile::initProfile();
+ 
+    return true;
+ }
 
 /**
  * Uninstall hook
  * @return boolean
  */
 function plugin_roundrobinassignment_uninstall() {
-   global $DB;
+    global $DB;
 
-   $tables = [
-      'glpi_plugin_roundrobinassignment_configs'
-   ];
-
-   foreach ($tables as $table) {
-      $DB->query("DROP TABLE IF EXISTS `$table`") or die($DB->error());
-   }
-
-   return true;
-}
+    $tables = [
+       'glpi_plugin_roundrobinassignment_configs'
+    ];
+ 
+    foreach ($tables as $table) {
+       $DB->query("DROP TABLE IF EXISTS `$table`") or die($DB->error());
+    }
+    
+    // Eliminar derechos de perfiles
+    $profileRight = new ProfileRight();
+    foreach (PluginRoundrobinassignmentProfile::getAllRights() as $right) {
+       $profileRight->deleteByCriteria(['name' => $right['field']]);
+    }
+ 
+    return true;
+ }
 
 /**
  * Hook called when a ticket is added

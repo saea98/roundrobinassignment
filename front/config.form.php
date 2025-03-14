@@ -1,16 +1,12 @@
 <?php
-/**
- * STI
- * Brenda Fierro Cervantes
- * GATGAD
- * Salvador Jiménez 
- */
+
 include('../../../inc/includes.php');
 
-Session::checkRight("config", UPDATE);
+// Verificar permisos
+Session::checkRight("plugin_roundrobinassignment_config", READ);
 
-// Save form data
-if (isset($_POST['add'])) {
+// Para guardar configuración se necesita permiso de actualización
+if (isset($_POST['add']) && Session::haveRight("plugin_roundrobinassignment_config", UPDATE)) {
    $config = new PluginRoundrobinassignmentConfig();
    
    // Check if group is already configured
@@ -33,8 +29,8 @@ if (isset($_POST['add'])) {
    Html::back();
 }
 
-// Remove a configuration
-if (isset($_GET['remove'])) {
+// Remove a configuration - requires UPDATE permission
+if (isset($_GET['remove']) && Session::haveRight("plugin_roundrobinassignment_config", UPDATE)) {
    $config = new PluginRoundrobinassignmentConfig();
    $config->delete(['id' => $_GET['remove']]);
    Session::addMessageAfterRedirect(__('Group configuration removed', 'roundrobinassignment'), true, INFO);
